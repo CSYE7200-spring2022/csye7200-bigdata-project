@@ -2,16 +2,18 @@
 *.log
 *millionsongsubset*
 /.idea/
-/project/*
+/project/
 
 #
 # JARs aren't checked in, they are fetched by sbt
 #
-/lib/*.jar
 /test/files/codelib/*.jar
 /test/files/lib/*.jar
 /test/files/speclib/instrumented.jar
 /tools/*.jar
+
+# enable unmanaged jars
+#/lib/*.jar
 
 # Developer specific properties
 /build.properties

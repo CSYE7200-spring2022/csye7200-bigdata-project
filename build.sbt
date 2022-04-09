@@ -10,8 +10,9 @@ Test / parallelExecution := false
 val sparkVersion = "3.1.1"
 
 libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % "3.2.3" % "test",
+  "org.scalatest" %% "scalatest" % "3.2.11" % "test",
   "org.apache.spark" %% "spark-core" % sparkVersion,
   "org.apache.spark" %% "spark-sql" % sparkVersion,
-  "org.apache.spark" %% "spark-mllib" % sparkVersion
+  "org.apache.spark" %% "spark-mllib" % sparkVersion,
+  "io.jhdf" % "jhdf" % "0.6.6"
 )
