@@ -15,14 +15,12 @@ object HelloWorld extends App {
 
   spark.sparkContext.setLogLevel("ERROR")
 
-  var filepath = getClass.getResource("/username.csv")
-
-  val filename = filepath.getPath
+  val filepath = getClass.getResource("/username.csv").getPath
 
   val df = spark.read
     .option("header", "true")
     .option("delimiter", ";")
-    .csv(filename)
+    .csv(filepath)
 
   df.show()
 }
