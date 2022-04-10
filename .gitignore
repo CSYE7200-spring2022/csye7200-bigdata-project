@@ -64,3 +64,5 @@ jitwatch.out
 project/**/metals.sbt
 
 .bsp
+
+/null/
