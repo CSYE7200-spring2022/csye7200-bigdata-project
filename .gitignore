@@ -1,8 +1,12 @@
 *.class
 *.log
 *millionsongsubset*
-/.idea/
-/project/
+/project/target
+/project/project
+target
+/logs
+/RUNNING_PID
+models
 
 #
 # JARs aren't checked in, they are fetched by sbt
