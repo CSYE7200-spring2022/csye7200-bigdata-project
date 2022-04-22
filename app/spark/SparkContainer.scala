@@ -1,10 +1,11 @@
 package spark
 
-import org.apache.spark.ml.classification.{LogisticRegressionModel, RandomForestClassificationModel}
+import org.apache.spark.ml.PipelineModel
 import org.apache.spark.sql.SparkSession
 import play.api.{Configuration, Logger, Logging}
 
 import javax.inject._
+import scala.util.Try
 
 /**
  * Spark context container for dependency injection.
@@ -28,21 +29,23 @@ class SparkContainer @Inject()(config: Configuration) extends Logging {
 
   private val sparkLocal: SparkSession = SparkSession
     .builder()
-    .appName("test")
+    .appName("webapp")
     .master("local[*]")
     .getOrCreate()
 
 
   // -------- models --------
-  val lrModelOpt: Option[LogisticRegressionModel] =
+  val lrModelOpt: Option[PipelineModel] = Try {
     if (checkModelExist(LRModelPath))
-      Some(LogisticRegressionModel.load(LRModelPath))
-    else None
+      PipelineModel.load(LRModelPath)
+    else throw new Exception("Model files does not exist")
+  }.toOption
 
-  val rfModelOpt: Option[RandomForestClassificationModel] =
+  val rfModelOpt: Option[PipelineModel] = Try {
     if (checkModelExist(RFModelPath))
-      Some(RandomForestClassificationModel.load(RFModelPath))
-    else None
+      PipelineModel.load(RFModelPath)
+    else throw new Exception("Model files does not exist")
+  }.toOption
 
 
   // -------- utils --------

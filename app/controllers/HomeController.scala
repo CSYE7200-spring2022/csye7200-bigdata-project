@@ -7,7 +7,7 @@ import javax.inject._
 
 class HomeController @Inject()(val controllerComponents: ControllerComponents, val sparkContainer: SparkContainer) extends BaseController {
 
-  def index() = Action { implicit request: Request[AnyContent] =>
+  def index(): Action[AnyContent] = Action { implicit request: Request[AnyContent] =>
     Ok(views.html.index(""))
   }
 }
