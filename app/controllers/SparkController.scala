@@ -1,6 +1,6 @@
 package controllers
 
-import org.apache.spark.ml.Transformer
+import org.apache.spark.ml.{PipelineModel, Transformer}
 import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionModel, RandomForestClassificationModel, RandomForestClassifier}
 import play.api.mvc._
 import play.api._
@@ -18,7 +18,7 @@ class SparkController @Inject()(
   val config: Configuration
 ) extends BaseController with Logging {
 
-  def trainModels = Action {
+  def trainModels: Action[AnyContent] = Action {
 
     Future(List(FitModel.ModelName_LR, FitModel.ModelName_RF)
       .map(FitModel.fit(FitModel.data(sparkContainer.getSession).get, _, evaluate = true)))
@@ -26,8 +26,8 @@ class SparkController @Inject()(
         case Success(List(lrTry, rfTry)) => (lrTry, rfTry) match {
           case (Success(lr), Success(rf)) => {
             // save models to file, need to restart Play! application to load the models
-            lr.asInstanceOf[LogisticRegressionModel].write.overwrite().save(sparkContainer.LRModelPath)
-            rf.asInstanceOf[RandomForestClassificationModel].write.overwrite().save(sparkContainer.RFModelPath)
+            lr.asInstanceOf[PipelineModel].write.overwrite().save(sparkContainer.LRModelPath)
+            rf.asInstanceOf[PipelineModel].write.overwrite().save(sparkContainer.RFModelPath)
             logger.info("Successfully trained the model and saved to files")
           }
           case _ => logger.error("Error while training models!")
@@ -39,20 +39,20 @@ class SparkController @Inject()(
   }
 
 
-  def inferenceLR = Action(parse.json) { implicit request: Request[JsValue] => {
+  def inferenceLR: Action[JsValue] = Action(parse.json) { implicit request: Request[JsValue] => {
     val jsVal = request.body
     inference(sparkContainer.lrModelOpt, jsVal)
   }}
 
 
-  def inferenceRF = Action(parse.json) { implicit request: Request[JsValue] => {
+  def inferenceRF: Action[JsValue] = Action(parse.json) { implicit request: Request[JsValue] => {
     val jsVal = request.body
     inference(sparkContainer.rfModelOpt, jsVal)
   }}
 
-  def inference(model: Option[Transformer], jsVal: JsValue) = model match {
+  def inference(model: Option[Transformer], jsVal: JsValue): Result = model match {
     case Some(model) => {
-      val processedDf = FitModel.preprocessing(
+      val processedDf = FitModel.columnProcessing(
         FitModel.dfFromJson(jsVal, sparkContainer.getSession),
         isTrainData = false
       )
