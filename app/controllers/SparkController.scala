@@ -1,11 +1,10 @@
 package controllers
 
-import org.apache.spark.ml.{PipelineModel, Transformer}
-import org.apache.spark.ml.classification.{LogisticRegression, LogisticRegressionModel, RandomForestClassificationModel, RandomForestClassifier}
-import play.api.mvc._
+import org.apache.spark.ml.Transformer
 import play.api._
 import play.api.libs.json._
-import spark.{FitModel, SparkContainer}
+import play.api.mvc._
+import spark.{DataUtils, FitModel, SparkContainer}
 
 import javax.inject._
 import scala.concurrent.ExecutionContext.Implicits._
@@ -20,20 +19,22 @@ class SparkController @Inject()(
 
   def trainModels: Action[AnyContent] = Action {
 
-    Future(List(FitModel.ModelName_LR, FitModel.ModelName_RF)
-      .map(FitModel.fit(FitModel.data(sparkContainer.getSession).get, _, evaluate = true)))
-      .onComplete{
-        case Success(List(lrTry, rfTry)) => (lrTry, rfTry) match {
-          case (Success(lr), Success(rf)) => {
-            // save models to file, need to restart Play! application to load the models
-            lr.asInstanceOf[PipelineModel].write.overwrite().save(sparkContainer.LRModelPath)
-            rf.asInstanceOf[PipelineModel].write.overwrite().save(sparkContainer.RFModelPath)
-            logger.info("Successfully trained the model and saved to files")
-          }
-          case _ => logger.error("Error while training models!")
+    Future(
+      List(FitModel.ModelName_LR, FitModel.ModelName_RF)
+        .map(FitModel.fit(FitModel.data(sparkContainer.getSession).get, _, evaluate = true))
+    ).onComplete{
+      case Success(List(lrTry, rfTry)) => (lrTry, rfTry) match {
+        case (Success(lr), Success(rf)) => {
+          lr.write.overwrite().save(sparkContainer.LRModelPath)
+          rf.write.overwrite().save(sparkContainer.RFModelPath)
+          sparkContainer.lrModelOpt = Some(lr)
+          sparkContainer.rfModelOpt = Some(rf)
+          logger.info("Successfully trained the model and saved to files")
         }
-        case Failure(exception) => logger.error("Cannot train the model")
+        case _ => logger.error("Error while training models!")
       }
+      case Failure(exception) => logger.error(s"Cannot train the model: ${exception.getMessage}")
+    }
 
     Ok(views.html.index("Model training initiated!"))
   }
@@ -53,7 +54,7 @@ class SparkController @Inject()(
   def inference(model: Option[Transformer], jsVal: JsValue): Result = model match {
     case Some(model) => {
       val processedDf = FitModel.columnProcessing(
-        FitModel.dfFromJson(jsVal, sparkContainer.getSession),
+        DataUtils.dfFromJson(jsVal, sparkContainer.getSession),
         isTrainData = false
       )
 
@@ -61,13 +62,9 @@ class SparkController @Inject()(
         case Success(df) => {
           val prediction = model.transform(df).select("prediction").head().getDouble(0)
 
-          // TODO - to be deleted
-          val ddff = model.transform(df)
-          println(ddff.head.schema.map(_.name).zip(ddff.head().toSeq))
-
           Ok(s"result: ${prediction} (${if (prediction == 0) "not popular" else "popular"})")
         }
-        case Failure(e) => BadRequest(s"Error processing dataframe: ${e.toString}")
+        case Failure(e) => BadRequest(s"Error processing dataframe: ${e.getMessage}")
       }
     }
     case None => BadRequest("Model not initialized, please train the model first")

@@ -21,13 +21,6 @@ class FitModelTest extends AnyFlatSpec with Matchers{
     .master("local[*]")
     .getOrCreate()
 
-  val json: JsValue = Json.parse{
-    val file = scala.io.Source.fromFile(getClass.getResource("/sample.json").getPath)
-    val js = file.mkString
-    file.close()
-    js
-  }
-
 
   behavior of "ML Pipeline"
 
@@ -35,7 +28,7 @@ class FitModelTest extends AnyFlatSpec with Matchers{
 
     val filepath = getClass.getResource("/sample_songs.csv").getPath
 
-    val try_processed_df = for(df <- FitModel.loadCsv(filepath, spark);
+    val try_processed_df = for(df <- DataUtils.loadCsv(filepath, spark);
                                pdf <- FitModel.columnProcessing(df)) yield pdf
 
     try_processed_df should matchPattern {
@@ -60,7 +53,7 @@ class FitModelTest extends AnyFlatSpec with Matchers{
     val filepath = getClass.getResource(SAMPLE_SONGS_FILEPATH).getPath
 
     val try_models = for (
-      raw_df <- FitModel.loadCsv(filepath, spark);
+      raw_df <- DataUtils.loadCsv(filepath, spark);
       processed_df <- FitModel.columnProcessing(raw_df)
     ) yield (
       FitModel.fit(processed_df, FitModel.ModelName_LR, evaluate = true),
@@ -74,21 +67,12 @@ class FitModelTest extends AnyFlatSpec with Matchers{
     try_models match {
       case Success((lrTry, rfTry)) => (lrTry, rfTry) match {
         case (Success(lr: PipelineModel), Success(rf: PipelineModel)) =>
-          val df = FitModel.columnProcessing(FitModel.loadCsv(filepath, spark).get.limit(100)).get
+          val df = FitModel.columnProcessing(DataUtils.loadCsv(filepath, spark).get.limit(100)).get
           lr.transform(df).select("prediction")
             .head(3).map(r => r.getDouble(0)) shouldBe Array(1.0, 1.0, 0.0)
           rf.transform(df).select("prediction")
             .head(3).map(r => r.getDouble(0)) shouldBe Array(1.0, 1.0, 0.0)
       }
     }
-  }
-
-
-  behavior of "Json converter"
-
-  it should "successfully convert JsValue to DataFrame" in {
-    val df = FitModel.dfFromJson(json, spark)
-    df.count() shouldBe 1
-    df.select("artist_latitude").head().getDouble(0) shouldBe 8.4177
   }
 }

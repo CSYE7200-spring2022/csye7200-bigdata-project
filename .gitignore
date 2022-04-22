@@ -6,7 +6,7 @@
 target
 /logs
 /RUNNING_PID
-models
+/models
 
 #
 # JARs aren't checked in, they are fetched by sbt
