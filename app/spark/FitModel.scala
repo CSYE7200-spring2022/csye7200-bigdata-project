@@ -1,14 +1,13 @@
 package spark
 
 import com.typesafe.config.ConfigFactory
-import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.classification.{LogisticRegression, RandomForestClassifier}
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
 import org.apache.spark.ml.feature.{StandardScaler, VectorAssembler}
-import org.apache.spark.sql.functions.{col, expr, when}
+import org.apache.spark.ml.{Pipeline, PipelineModel}
+import org.apache.spark.sql.functions.{expr, when}
 import org.apache.spark.sql.types._
-import org.apache.spark.sql.{DataFrame, Encoders, SparkSession}
-import play.api.libs.json._
+import org.apache.spark.sql.{DataFrame, SparkSession}
 import play.api.{Configuration, Logging}
 
 import java.io.File
@@ -16,26 +15,24 @@ import scala.util.Try
 
 object FitModel extends Logging {
 
+  // constants - model names
+  val ModelName_LR = "Logistic Regression"
+  val ModelName_RF = "Random Forest classifier"
+
   val config: Configuration = Configuration(
     ConfigFactory.parseFile(
       new File(getClass.getResource("/application.conf").getPath)
     )
   )
 
-  // constants - model names
-  val ModelName_LR = "Logistic Regression"
-  val ModelName_RF = "Random Forest classifier"
 
   def data(spark: SparkSession, useCsv: Boolean = false): Option[DataFrame] =
-    if (useCsv || config.get[Boolean]("spark.useCsv")) {
-      loadCsv(config.get[String]("spark.csvPath"), spark)
-        .flatMap(columnProcessing(_))
-        .toOption
-    } else {
+    (if (useCsv || config.get[Boolean]("spark.useCsv"))
+      DataUtils.loadCsv(config.get[String]("spark.csvPath"), spark)
+    else
       DataUtils.loadDataFromFolder(config.get[String]("spark.h5FolderPath"), spark)
-        .flatMap(columnProcessing(_))
-        .toOption
-    }
+    ).flatMap(columnProcessing(_)).toOption
+
 
   def getSchema(isTrainData: Boolean = true): StructType = StructType(
     // song_hotness is the label for training data
@@ -73,21 +70,6 @@ object FitModel extends Logging {
         StructField("year", IntegerType)
   ))
 
-  // TODO - This can be removed after the pipeline is setting up
-  def loadCsv(filepath: String, spark: SparkSession): Try[DataFrame] = Try {
-    spark.read
-      .option("delimiter", ",")
-      .schema(getSchema(true))
-      .csv(filepath)
-  }
-
-  def dfFromJson(json: JsValue, spark: SparkSession): DataFrame = {
-    spark.read
-      .schema(getSchema(isTrainData = false))
-      .json(
-        spark.createDataset(List(json.toString()))(Encoders.STRING)
-      )
-  }
 
   def columnProcessing(df: DataFrame, isTrainData: Boolean = true): Try[DataFrame] = Try {
     // drop songs before 1920 and those with nan values
@@ -106,26 +88,27 @@ object FitModel extends Logging {
     } else df1
   }
 
+
   def assembleScalePipeline(df: DataFrame): Pipeline ={
-    val vector_assembler = new VectorAssembler()
+    val vectorAssembler = new VectorAssembler()
       .setInputCols(df.dtypes
         .filter(x => !List("song_hotness", "label").contains(x._1) && List("DoubleType", "IntegerType").contains(x._2))
         .map(_._1)
       )
       .setOutputCol("raw_features")
 
-    val standard_scaler = new StandardScaler()
+    val standardScaler = new StandardScaler()
       .setInputCol("raw_features")
       .setOutputCol("features") // MUST set here "features", Model will find this col by specific name to train
 
-    new Pipeline().setStages(Array(vector_assembler, standard_scaler))
+    new Pipeline().setStages(Array(vectorAssembler, standardScaler))
   }
 
 
   def fit(df: DataFrame,
           modelName: String,
           evaluate: Boolean = false
-  ): Try[Any] = Try {
+  ): Try[PipelineModel] = Try {
     val dataSplit = df.randomSplit(Array(0.8, 0.2), seed = 11L)
     val trainSet = dataSplit(0).cache()
 

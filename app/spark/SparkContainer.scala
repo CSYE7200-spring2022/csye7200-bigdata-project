@@ -2,7 +2,7 @@ package spark
 
 import org.apache.spark.ml.PipelineModel
 import org.apache.spark.sql.SparkSession
-import play.api.{Configuration, Logger, Logging}
+import play.api.{Configuration, Logging}
 
 import javax.inject._
 import scala.util.Try
@@ -35,13 +35,14 @@ class SparkContainer @Inject()(config: Configuration) extends Logging {
 
 
   // -------- models --------
-  val lrModelOpt: Option[PipelineModel] = Try {
+  // TODO - use val instead of val
+  var lrModelOpt: Option[PipelineModel] = Try {
     if (checkModelExist(LRModelPath))
       PipelineModel.load(LRModelPath)
     else throw new Exception("Model files does not exist")
   }.toOption
 
-  val rfModelOpt: Option[PipelineModel] = Try {
+  var rfModelOpt: Option[PipelineModel] = Try {
     if (checkModelExist(RFModelPath))
       PipelineModel.load(RFModelPath)
     else throw new Exception("Model files does not exist")

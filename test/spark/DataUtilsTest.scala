@@ -3,6 +3,7 @@ package spark
 import org.apache.spark.sql.SparkSession
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
+import play.api.libs.json.{JsValue, Json}
 import play.api.test.Injecting
 
 import scala.util.{Failure, Success}
@@ -12,6 +13,13 @@ class DataUtilsTest extends AnyFlatSpec with Matchers {
   val SAMPLE_H5_FILEPATH = "/sample.h5"
   val SAMPLE_H5_FILEPATH_NO_HOTNESS = "/sample_no_hotness.h5"
   val SAMPLE_H5_FOLDER_PATH = "/A"
+
+  val json: JsValue = Json.parse{
+    val file = scala.io.Source.fromFile(getClass.getResource("/sample.json").getPath)
+    val js = file.mkString
+    file.close()
+    js
+  }
 
   val spark: SparkSession = SparkSession
     .builder()
@@ -93,5 +101,13 @@ class DataUtilsTest extends AnyFlatSpec with Matchers {
     dfTry should matchPattern {
       case Failure(_) =>
     }
+  }
+
+  behavior of "Json converter"
+
+  it should "successfully convert JsValue to DataFrame" in {
+    val df = DataUtils.dfFromJson(json, spark)
+    df.count() shouldBe 1
+    df.select("artist_latitude").head().getDouble(0) shouldBe 8.4177
   }
 }

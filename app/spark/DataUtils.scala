@@ -1,9 +1,10 @@
 package spark
 
 import io.jhdf.HdfFile
-import org.apache.spark.rdd.RDD
 import org.apache.spark.sql.{DataFrame, Encoders, Row, SparkSession}
 import play.api.Logging
+import play.api.libs.json.JsValue
+import spark.FitModel.getSchema
 
 import java.io.File
 import java.util
@@ -126,5 +127,20 @@ object DataUtils extends Logging {
       val rowList = inner(List(folderFile), Nil)
       spark.createDataFrame(spark.sparkContext.parallelize(rowList), FitModel.getSchema())
     } else {throw new Exception("Invalid file path!")}
+  }
+
+  def loadCsv(filepath: String, spark: SparkSession): Try[DataFrame] = Try {
+    spark.read
+      .option("delimiter", ",")
+      .schema(getSchema())
+      .csv(filepath)
+  }
+
+  def dfFromJson(json: JsValue, spark: SparkSession): DataFrame = {
+    spark.read
+      .schema(getSchema(isTrainData = false))
+      .json(
+        spark.createDataset(List(json.toString()))(Encoders.STRING)
+      )
   }
 }
