@@ -1,6 +1,6 @@
 package spark
 
-import org.apache.spark.ml.classification.{LogisticRegressionModel, RandomForestClassificationModel}
+import org.apache.spark.ml.PipelineModel
 import org.apache.spark.sql.SparkSession
 import play.api.{Configuration, Logger, Logging}
 
@@ -34,14 +34,14 @@ class SparkContainer @Inject()(config: Configuration) extends Logging {
 
 
   // -------- models --------
-  val lrModelOpt: Option[LogisticRegressionModel] =
+  val lrModelOpt: Option[PipelineModel] =
     if (checkModelExist(LRModelPath))
-      Some(LogisticRegressionModel.load(LRModelPath))
+      Some(PipelineModel.load(LRModelPath))
     else None
 
-  val rfModelOpt: Option[RandomForestClassificationModel] =
+  val rfModelOpt: Option[PipelineModel] =
     if (checkModelExist(RFModelPath))
-      Some(RandomForestClassificationModel.load(RFModelPath))
+      Some(PipelineModel.load(RFModelPath))
     else None
 
 
