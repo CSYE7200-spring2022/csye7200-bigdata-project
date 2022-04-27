@@ -29,12 +29,14 @@ Postman collection available at `postman_api/spark.postman_collection.json`. Imp
 Application configuration file is `conf/application.conf`
 
 -   `spark` - all spark related configuration
-    -   `isLocal` - Boolean. Indicate whether Spark session will be run on local
-    -   `LRModelPath` - String. Path where logistic regression's pipeline model is saved
-    -   `RFModelPath` - String. Path where random forest's pipeline model is saved
-    -   `useCsv` - Boolean. Indicate whether we will use processed .csv file as training data input
-    -   `h5FolderPath` - String. If `useCsv` is set to false, all .h5 files under `h5FolderPath` will be used as training data
-    -   `csvPath` - String. Path where the processed .csv file is at. Only used if `useCsv` is set to true
+    - `isLocal` - Boolean. Indicate whether Spark session will be run on local
+    - `LRModelPath` - String. Path where logistic regression's pipeline model is saved
+    - `RFModelPath` - String. Path where random forest's pipeline model is saved
+    - `useCsv` - Boolean. Indicate whether we will use processed .csv file as training data input
+    - `h5FolderPath` - String. If `useCsv` is set to false, all .h5 files under `h5FolderPath` will be used as training data
+    - `csvPath` - String. Path where the processed .csv file is at. Only used if `useCsv` is set to true
+    - `masterIp` - String. When running on cluster, the IP address of master node
+    - `executorMem` - String. Memory size assigned to Spark on each cluster executor. e.g. '12g'
 
 ## Libraries
 

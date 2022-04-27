@@ -1,11 +1,13 @@
+ThisBuild / name := "csye7200_project"
+ThisBuild / version := "1.0"
 
-name := "csye7200_project"
-version := "1.0"
-scalaVersion := "2.12.12"
+// change scala version to cluster compatible scala version!
+ThisBuild / scalaVersion := "2.12.12"
 
 Compile / doc / scalacOptions ++= Seq("-groups", "-implicits", "-deprecation", "-Ywarn-dead-code", "-Ywarn-value-discard", "-Ywarn-unused" )
 
-val sparkVersion = "3.1.1"
+// change spark version to what you are using on cluster!
+val sparkVersion = "3.2.1"
 
 lazy val root = (project in file("."))
   .enablePlugins(PlayScala)
