@@ -52,27 +52,25 @@ class SparkController @Inject()(
     inference(sparkContainer.rfModelOpt, jsVal)
   }}
 
-  def inferenceBatchLR: Action[MultipartFormData[Files.TemporaryFile]] = Action(parse.multipartFormData) { implicit request: => {
+  def inferenceBatchLR: Action[MultipartFormData[Files.TemporaryFile]] = Action(parse.multipartFormData) { implicit request => {
     request.body.file("csv").map { csv =>
       import java.io.File
-      val filename = csv.filename
-      val contentType = csv.contentType
-      csv.ref.moveTo(new File("/tmp/batch.csv"))
-      inferenceBatch(sparkContainer.lrModelOpt, "/tmp/batch.csv")
-      Ok("File uploaded")
+      val temp_f = new File("/tmp/batch.csv")
+      temp_f.delete()
+      csv.ref.moveTo(temp_f)
+      inferenceBatch(sparkContainer.rfModelOpt, "/tmp/batch.csv")
     }.getOrElse {
       BadRequest("Missing file!")
     }
   }}
 
-  def inferenceBatchRF: Action[MultipartFormData[Files.TemporaryFile]] = Action(parse.multipartFormData) { implicit request: => {
+  def inferenceBatchRF: Action[MultipartFormData[Files.TemporaryFile]] = Action(parse.multipartFormData) { implicit request => {
     request.body.file("csv").map { csv =>
       import java.io.File
-      val filename = csv.filename
-      val contentType = csv.contentType
-      csv.ref.moveTo(new File("/tmp/batch.csv"))
+      val temp_f = new File("/tmp/batch.csv")
+      temp_f.delete()
+      csv.ref.moveTo(temp_f)
       inferenceBatch(sparkContainer.rfModelOpt, "/tmp/batch.csv")
-      Ok("File uploaded")
     }.getOrElse {
       BadRequest("Missing file!")
     }
@@ -105,11 +103,17 @@ class SparkController @Inject()(
         isTrainData = false
       )
 
+      logger.info(s"Batch size = ${processedDf.get.count().toInt}")
+
       processedDf match {
         case Success(df) => {
-          val prediction = model.transform(df).select("prediction").head().getDouble(0)
+          val predictionDF = model.transform(df).select("prediction")
+          val record_num = predictionDF.count().toInt
+          val prediction = predictionDF.head(record_num)
+            .map(r => r.getDouble(0))
+            .map(p => if(p == 0) "not popular" else "popular")
 
-          Ok(s"result: ${prediction} (${if (prediction == 0) "not popular" else "popular"})")
+          Ok(s"Batch size: ${record_num}\nresult: ${prediction.mkString("[\n", "\n ", "\n]")}")
         }
         case Failure(e) => BadRequest(s"Error processing dataframe: ${e.getMessage}")
       }

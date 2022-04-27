@@ -31,7 +31,7 @@ object FitModel extends Logging {
       DataUtils.loadCsv(config.get[String]("spark.csvPath"), spark)
     else
       DataUtils.loadDataFromFolder(config.get[String]("spark.h5FolderPath"), spark)
-    ).flatMap(columnProcessing(_)).toOption
+      ).flatMap(columnProcessing(_)).toOption
 
 
   def getSchema(isTrainData: Boolean = true): StructType = StructType(
@@ -68,16 +68,18 @@ object FitModel extends Logging {
         StructField("artist_terms_weight", StringType),
         // musicbrainz
         StructField("year", IntegerType)
-  ))
+      ))
 
 
   def columnProcessing(df: DataFrame, isTrainData: Boolean = true): Try[DataFrame] = Try {
     // drop songs before 1920 and those with nan values
+    logger.info(s"raw dataframe size: ${df.count()}")
     val df1 = df.filter(df("year") > 1920)
       .na.drop(List("artist_latitude", "artist_longitude"))
       // TODO - drop these two columns?
       // .drop("energy", "danceability")
       .withColumn("year", df("year") - 1920)
+    // logger.info(s"Batch year = ${df1.select("year").head(4).map(x => x.getInt(0)).mkString("Array(", ", ", ")")}")
 
     if (isTrainData) {
       val avgHotness = df1.select(expr("AVG(song_hotness)"))
@@ -108,7 +110,7 @@ object FitModel extends Logging {
   def fit(df: DataFrame,
           modelName: String,
           evaluate: Boolean = false
-  ): Try[PipelineModel] = Try {
+         ): Try[PipelineModel] = Try {
     val dataSplit = df.randomSplit(Array(0.8, 0.2), seed = 11L)
     val trainSet = dataSplit(0).cache()
 
