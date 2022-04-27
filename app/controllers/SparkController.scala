@@ -2,6 +2,7 @@ package controllers
 
 import org.apache.spark.ml.Transformer
 import play.api._
+import play.api.libs.Files
 import play.api.libs.json._
 import play.api.mvc._
 import spark.{DataUtils, FitModel, SparkContainer}
@@ -51,6 +52,31 @@ class SparkController @Inject()(
     inference(sparkContainer.rfModelOpt, jsVal)
   }}
 
+  def inferenceBatchLR: Action[MultipartFormData[Files.TemporaryFile]] = Action(parse.multipartFormData) { implicit request => {
+    request.body.file("csv").map { csv =>
+      import java.io.File
+      val temp_f = new File("/tmp/batch.csv")
+      temp_f.delete()
+      csv.ref.moveTo(temp_f)
+      inferenceBatch(sparkContainer.rfModelOpt, "/tmp/batch.csv")
+    }.getOrElse {
+      BadRequest("Missing file!")
+    }
+  }}
+
+  def inferenceBatchRF: Action[MultipartFormData[Files.TemporaryFile]] = Action(parse.multipartFormData) { implicit request => {
+    request.body.file("csv").map { csv =>
+      import java.io.File
+      val temp_f = new File("/tmp/batch.csv")
+      temp_f.delete()
+      csv.ref.moveTo(temp_f)
+      inferenceBatch(sparkContainer.rfModelOpt, "/tmp/batch.csv")
+    }.getOrElse {
+      BadRequest("Missing file!")
+    }
+  }}
+
+
   def inference(model: Option[Transformer], jsVal: JsValue): Result = model match {
     case Some(model) => {
       val processedDf = FitModel.columnProcessing(
@@ -69,4 +95,31 @@ class SparkController @Inject()(
     }
     case None => BadRequest("Model not initialized, please train the model first")
   }
+
+  def inferenceBatch(model: Option[Transformer], filepath: String): Result = model match {
+    case Some(model) => {
+      val processedDf = FitModel.columnProcessing(
+        DataUtils.loadCsv(filepath, sparkContainer.getSession).get,
+        isTrainData = false
+      )
+
+      logger.info(s"Batch size = ${processedDf.get.count().toInt}")
+
+      processedDf match {
+        case Success(df) => {
+          val predictionDF = model.transform(df).select("prediction")
+          val record_num = predictionDF.count().toInt
+          val prediction = predictionDF.head(record_num)
+            .map(r => r.getDouble(0))
+            .map(p => if(p == 0) "not popular" else "popular")
+
+          Ok(s"Batch size: ${record_num}\nresult: ${prediction.mkString("[\n", "\n ", "\n]")}")
+        }
+        case Failure(e) => BadRequest(s"Error processing dataframe: ${e.getMessage}")
+      }
+    }
+    case None => BadRequest("Model not initialized, please train the model first")
+  }
+
+
 }
