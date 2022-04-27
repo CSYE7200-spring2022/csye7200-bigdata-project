@@ -6,7 +6,6 @@ import org.apache.spark.sql.functions.{count, when}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.tagobjects.Slow
-import play.api.libs.json.{JsValue, Json}
 import spark.FitModel.assembleScalePipeline
 
 import scala.util.Success

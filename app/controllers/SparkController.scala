@@ -25,13 +25,13 @@ class SparkController @Inject()(
         .map(FitModel.fit(FitModel.data(sparkContainer.getSession).get, _, evaluate = true))
     ).onComplete{
       case Success(List(lrTry, rfTry)) => (lrTry, rfTry) match {
-        case (Success(lr), Success(rf)) => {
+        case (Success(lr), Success(rf)) =>
           lr.write.overwrite().save(sparkContainer.LRModelPath)
           rf.write.overwrite().save(sparkContainer.RFModelPath)
           sparkContainer.lrModelOpt = Some(lr)
           sparkContainer.rfModelOpt = Some(rf)
           logger.info("Successfully trained the model and saved to files")
-        }
+
         case _ => logger.error("Error while training models!")
       }
       case Failure(exception) => logger.error(s"Cannot train the model: ${exception.getMessage}")
@@ -58,7 +58,7 @@ class SparkController @Inject()(
       val temp_f = new File("/tmp/batch.csv")
       temp_f.delete()
       csv.ref.moveTo(temp_f)
-      inferenceBatch(sparkContainer.rfModelOpt, "/tmp/batch.csv")
+      inferenceBatch(sparkContainer.lrModelOpt, "/tmp/batch.csv")
     }.getOrElse {
       BadRequest("Missing file!")
     }
@@ -78,26 +78,24 @@ class SparkController @Inject()(
 
 
   def inference(model: Option[Transformer], jsVal: JsValue): Result = model match {
-    case Some(model) => {
+    case Some(model) =>
       val processedDf = FitModel.columnProcessing(
         DataUtils.dfFromJson(jsVal, sparkContainer.getSession),
         isTrainData = false
       )
 
       processedDf match {
-        case Success(df) => {
+        case Success(df) =>
           val prediction = model.transform(df).select("prediction").head().getDouble(0)
+          Ok(s"result: $prediction (${if (prediction == 0) "not popular" else "popular"})")
 
-          Ok(s"result: ${prediction} (${if (prediction == 0) "not popular" else "popular"})")
-        }
         case Failure(e) => BadRequest(s"Error processing dataframe: ${e.getMessage}")
       }
-    }
     case None => BadRequest("Model not initialized, please train the model first")
   }
 
   def inferenceBatch(model: Option[Transformer], filepath: String): Result = model match {
-    case Some(model) => {
+    case Some(model) =>
       val processedDf = FitModel.columnProcessing(
         DataUtils.loadCsv(filepath, sparkContainer.getSession).get,
         isTrainData = false
@@ -106,18 +104,16 @@ class SparkController @Inject()(
       logger.info(s"Batch size = ${processedDf.get.count().toInt}")
 
       processedDf match {
-        case Success(df) => {
+        case Success(df) =>
           val predictionDF = model.transform(df).select("prediction")
           val record_num = predictionDF.count().toInt
           val prediction = predictionDF.head(record_num)
             .map(r => r.getDouble(0))
             .map(p => if(p == 0) "not popular" else "popular")
 
-          Ok(s"Batch size: ${record_num}\nresult: ${prediction.mkString("[\n", "\n ", "\n]")}")
-        }
+          Ok(s"Batch size: $record_num\nresult: ${prediction.mkString("[\n", "\n ", "\n]")}")
         case Failure(e) => BadRequest(s"Error processing dataframe: ${e.getMessage}")
       }
-    }
     case None => BadRequest("Model not initialized, please train the model first")
   }
 

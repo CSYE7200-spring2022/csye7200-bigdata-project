@@ -4,7 +4,6 @@ import org.apache.spark.sql.SparkSession
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import play.api.libs.json.{JsValue, Json}
-import play.api.test.Injecting
 
 import scala.util.{Failure, Success}
 
