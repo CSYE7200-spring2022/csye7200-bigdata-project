@@ -19,20 +19,28 @@ class SparkContainer @Inject()(config: Configuration) extends Logging {
   val RFModelPath: String = config.get[String]("spark.RFModelPath")
 
   val IsLocal: Boolean = config.get[Boolean]("spark.isLocal")
+  val MasterIp: String = config.get[String]("spark.masterIp")
+  val ClusterExecutorMem: String = config.get[String]("spark.executorMem")
 
 
   // -------- session --------
-  // TODO - To be configured for cluster
-  def getSession: SparkSession = {
-    if (IsLocal) sparkLocal else ???
+  val getSession: SparkSession = {
+    if (IsLocal) sparkLocal else sparkCluster
   }
 
-  private val sparkLocal: SparkSession = SparkSession
+  private def sparkLocal: SparkSession = SparkSession
     .builder()
     .appName("webapp")
     .master("local[*]")
     .getOrCreate()
 
+  private def sparkCluster: SparkSession = SparkSession
+    .builder()
+    .appName("SparkApp")
+    .master(s"spark://$MasterIp:7077")
+    .config("spark.submit.deployMode","cluster")
+    .config("spark.executor.memory", ClusterExecutorMem)
+    .getOrCreate()
 
   // -------- models --------
   // TODO - use val instead of val
