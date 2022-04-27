@@ -3,7 +3,7 @@ package spark
 import com.typesafe.config.ConfigFactory
 import org.apache.spark.ml.classification.{LogisticRegression, RandomForestClassifier}
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
-import org.apache.spark.ml.feature.{StandardScaler, VectorAssembler}
+import org.apache.spark.ml.feature.{StandardScaler, VectorAssembler, Tokenizer, HashingTF, IDF}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.sql.functions.{expr, when}
 import org.apache.spark.sql.types._
@@ -76,8 +76,7 @@ object FitModel extends Logging {
     logger.info(s"raw dataframe size: ${df.count()}")
     val df1 = df.filter(df("year") > 1920)
       .na.drop(List("artist_latitude", "artist_longitude"))
-      // TODO - drop these two columns?
-      // .drop("energy", "danceability")
+      .drop("artist_id", "artist_name", "title", "artist_terms", "artist_terms_freq", "artist_terms_weight")
       .withColumn("year", df("year") - 1920)
     // logger.info(s"Batch year = ${df1.select("year").head(4).map(x => x.getInt(0)).mkString("Array(", ", ", ")")}")
 
@@ -136,6 +135,18 @@ object FitModel extends Logging {
 
       logger.info("Accuracy on train set: " + evaluatePrediction(trainPrediction))
       logger.info("Accuracy on test set: " + evaluatePrediction(testPrediction))
+
+      val trainRecall = trainPrediction
+        .filter(trainPrediction("label") > 0 && trainPrediction("prediction") > 0.0).count().toDouble /
+        trainPrediction
+        .filter(trainPrediction("label") > 0).count().toDouble
+      val testRecall = testPrediction
+        .filter(testPrediction("label") > 0 && testPrediction("prediction") > 0.0).count().toDouble /
+        testPrediction
+        .filter(testPrediction("label") > 0).count().toDouble
+      logger.info("Recall on train set: " + trainRecall)
+      logger.info("Recall on test set: " + testRecall)
+
     }
 
     trainedPipelineModel

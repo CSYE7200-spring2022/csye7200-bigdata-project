@@ -41,7 +41,7 @@ class FitModelTest extends AnyFlatSpec with Matchers{
     popular_songs_num shouldBe 454
 
     val columns_num = processed_df.columns.length
-    columns_num shouldBe 27
+    columns_num shouldBe 21
 
     val assemble_scale_pipeline_model = assembleScalePipeline(processed_df).fit(processed_df)
     val transformed_df = assemble_scale_pipeline_model.transform(processed_df)
