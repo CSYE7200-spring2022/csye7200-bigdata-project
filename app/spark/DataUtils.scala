@@ -136,7 +136,7 @@ object DataUtils extends Logging {
       .csv(filepath)
   }
 
-  def dfFromJson(json: JsValue, spark: SparkSession): DataFrame = {
+  def dfFromJson(json: JsValue, spark: SparkSession): Try[DataFrame] = Try {
     spark.read
       .schema(getSchema(isTrainData = false))
       .json(

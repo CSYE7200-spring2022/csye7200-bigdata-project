@@ -12,6 +12,7 @@ class DataUtilsTest extends AnyFlatSpec with Matchers {
   val SAMPLE_H5_FILEPATH = "/sample.h5"
   val SAMPLE_H5_FILEPATH_NO_HOTNESS = "/sample_no_hotness.h5"
   val SAMPLE_H5_FOLDER_PATH = "/A"
+  val SAMPLE_CSV_FILE_PATH = "/sample_csv.csv"
 
   val json: JsValue = Json.parse{
     val file = scala.io.Source.fromFile(getClass.getResource("/sample.json").getPath)
@@ -102,10 +103,26 @@ class DataUtilsTest extends AnyFlatSpec with Matchers {
     }
   }
 
+  behavior of "CSV loader"
+
+  it should "successfully load csv file to DataFrame" in {
+    val csvPath = getClass.getResource(SAMPLE_CSV_FILE_PATH).getPath
+    val dfTry = DataUtils.loadCsv(csvPath, spark)
+    dfTry should matchPattern {
+      case Success(_) =>
+    }
+    val df = dfTry.get
+    df.count() shouldBe 935
+  }
+
   behavior of "Json converter"
 
   it should "successfully convert JsValue to DataFrame" in {
-    val df = DataUtils.dfFromJson(json, spark)
+    val dfTry = DataUtils.dfFromJson(json, spark)
+    dfTry should matchPattern {
+      case Success(_) =>
+    }
+    val df = dfTry.get
     df.count() shouldBe 1
     df.select("artist_latitude").head().getDouble(0) shouldBe 8.4177
   }
