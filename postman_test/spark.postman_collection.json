@@ -1,0 +1,83 @@
+{
+	"info": {
+		"_postman_id": "294009e2-4c50-483f-acc1-3893b58d6465",
+		"name": "spark",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "train models",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/spark/train",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"spark",
+						"train"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "LR inference",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"artist_familiarity\": 0.3318741464569221,\n    \"artist_hotttnesss\": 0.2771195134672702,\n    \"artist_id\": \"AR0IAWL1187B9A96D0\",\n    \"artist_latitude\": 8.4177,\n    \"artist_location\": \"Panama\",\n    \"artist_longitude\": -80.11278,\n    \"artist_name\": \"Danilo Perez / Claus Ogerman\",\n    \"title\": \"The Saga Of Rita Joe\",\n    \"danceability\": 0,\n    \"duration\": 459.31057,\n    \"end_of_fade_in\": 0.379,\n    \"energy\": 0,\n    \"key\": 4,\n    \"key_confidence\": 0.566,\n    \"loudness\": -14.117,\n    \"mode\": 1,\n    \"mode_confidence\": 0.542,\n    \"start_of_fade_out\": 451.1,\n    \"tempo\": 100.394,\n    \"time_signature\": 4,\n    \"time_signature_confidence\": 0,\n    \"artist_terms\": [\n        \"latin jazz\",\n        \"future jazz\",\n        \"brazilian jazz\",\n        \"piano blues\",\n        \"broken beat\",\n        \"acid jazz\",\n        \"smooth jazz\",\n        \"jazz\",\n        \"blues\",\n        \"electronic\",\n        \"latin\",\n        \"contemporary jazz\",\n        \"piano\",\n        \"classic\",\n        \"fusion\",\n        \"big band\",\n        \"post-bop\",\n        \"modern jazz\",\n        \"european\",\n        \"panama\",\n        \"afro-cuban jazz\"\n    ],\n    \"artist_terms_freq\": [\n        1,\n        0.9749504618047763,\n        0.9396451206487387,\n        0.8792902412974775,\n        0.8792902412974775,\n        0.9396451206487387,\n        0.8792902412974775,\n        1,\n        0.8792902412974775,\n        0.9036490574957897,\n        0.7224759974567191,\n        0.5765501908629956,\n        0.6794027084732941,\n        0.6440795735734257,\n        0.6011347149482981,\n        0.46924633496397616,\n        0.4009891387609839,\n        0.40011401898139,\n        0.44719289601691975,\n        0.2608494487317532,\n        0.20879357796679257\n    ],\n    \"artist_terms_weight\": [\n        1,\n        0.9821201053582919,\n        0.9569198092394647,\n        0.9138396184789294,\n        0.9138396184789294,\n        0.8946832764144523,\n        0.8824900485161498,\n        0.8106067074220262,\n        0.7747879172061642,\n        0.6959004962856777,\n        0.6958879786637653,\n        0.6958519607793481,\n        0.6706886205254983,\n        0.6706820907168368,\n        0.6276023089019455,\n        0.6211579016912184,\n        0.572437184082117,\n        0.5718125398537056,\n        0.571170586993323,\n        0.472408078822123,\n        0.43525156609498067\n    ],\n    \"year\": 2008\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/spark/infer/lr",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"spark",
+						"infer",
+						"lr"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "RF inference",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"artist_familiarity\": 0.3318741464569221,\n    \"artist_hotttnesss\": 0.2771195134672702,\n    \"artist_id\": \"AR0IAWL1187B9A96D0\",\n    \"artist_latitude\": 8.4177,\n    \"artist_location\": \"Panama\",\n    \"artist_longitude\": -80.11278,\n    \"artist_name\": \"Danilo Perez / Claus Ogerman\",\n    \"title\": \"The Saga Of Rita Joe\",\n    \"danceability\": 0,\n    \"duration\": 459.31057,\n    \"end_of_fade_in\": 0.379,\n    \"energy\": 0,\n    \"key\": 4,\n    \"key_confidence\": 0.566,\n    \"loudness\": -14.117,\n    \"mode\": 1,\n    \"mode_confidence\": 0.542,\n    \"start_of_fade_out\": 451.1,\n    \"tempo\": 100.394,\n    \"time_signature\": 4,\n    \"time_signature_confidence\": 0,\n    \"artist_terms\": [\n        \"latin jazz\",\n        \"future jazz\",\n        \"brazilian jazz\",\n        \"piano blues\",\n        \"broken beat\",\n        \"acid jazz\",\n        \"smooth jazz\",\n        \"jazz\",\n        \"blues\",\n        \"electronic\",\n        \"latin\",\n        \"contemporary jazz\",\n        \"piano\",\n        \"classic\",\n        \"fusion\",\n        \"big band\",\n        \"post-bop\",\n        \"modern jazz\",\n        \"european\",\n        \"panama\",\n        \"afro-cuban jazz\"\n    ],\n    \"artist_terms_freq\": [\n        1,\n        0.9749504618047763,\n        0.9396451206487387,\n        0.8792902412974775,\n        0.8792902412974775,\n        0.9396451206487387,\n        0.8792902412974775,\n        1,\n        0.8792902412974775,\n        0.9036490574957897,\n        0.7224759974567191,\n        0.5765501908629956,\n        0.6794027084732941,\n        0.6440795735734257,\n        0.6011347149482981,\n        0.46924633496397616,\n        0.4009891387609839,\n        0.40011401898139,\n        0.44719289601691975,\n        0.2608494487317532,\n        0.20879357796679257\n    ],\n    \"artist_terms_weight\": [\n        1,\n        0.9821201053582919,\n        0.9569198092394647,\n        0.9138396184789294,\n        0.9138396184789294,\n        0.8946832764144523,\n        0.8824900485161498,\n        0.8106067074220262,\n        0.7747879172061642,\n        0.6959004962856777,\n        0.6958879786637653,\n        0.6958519607793481,\n        0.6706886205254983,\n        0.6706820907168368,\n        0.6276023089019455,\n        0.6211579016912184,\n        0.572437184082117,\n        0.5718125398537056,\n        0.571170586993323,\n        0.472408078822123,\n        0.43525156609498067\n    ],\n    \"year\": 2008\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/spark/infer/rf",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"spark",
+						"infer",
+						"rf"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

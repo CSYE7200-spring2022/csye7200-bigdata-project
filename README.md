@@ -2,27 +2,43 @@
 
 ## How to start the application
 
-#### In IntelliJ IDEA
+### In IntelliJ IDEA
 
--   (Prerequisites) Install `scala` and `Play framework` plugins
--   Open `build.sbt` as a project
--   Open `sbt` panel on the right hand side, click on `tasks -> clean` and `tasks -> compile` to recompile the project
--   Edit run configurations, add a new `Play 2 application` config, set `Play 2 Module` as `csye7200_project`
--   Run the application
+- (Prerequisites) Install `scala` and `Play framework` plugins
+- (Prerequisites) Java version should be `8` (Java `15` also work on Windows)
+- Open `build.sbt` as a project
+- Open `sbt` panel on the right hand side, click on `tasks -> clean` and `tasks -> compile` to recompile the project
+- Edit run configurations, add a new `Play 2 application` config, set `Play 2 Module` as `csye7200_project`
+- Run the application
 
 ## APIs
 
-Postman collection available at `postman_api/spark.postman_collection.json`. Import it to Postman to start using.
-
--   **`/spark/train`**
+- **`/spark/train`**
     -   Start training the ML models and save them to files once complete
     -   Training process will be wrapped in `Future` and response will be returned immediately. Actual training status can be checked in application logs (by default `logs/application.log`)
--   **`/spark/infer/lr`**
+- **`/spark/infer/lr`**
     -   Logistic regression inference API. Input format can be checked in Postman.
     -   Output will be `0` (not popular) or `1` (popular)
--   **`/spark/infer/lr`**
+- **`/spark/infer/rf`**
     -   Random forest inference API. Input format can be checked in Postman.
     -   Output will be `0` (not popular) or `1` (popular)
+- **`/spark/infer_batch/lr`**
+    -   Logistic regression Batch inference API. Input should be **.csv**file.
+    -   Output will be a List contains `0` (not popular) or `1` (popular)
+- **`/spark/infer_batch/rf`**
+    -   Random forest Batch inference API. Input should be **.csv**file.
+    -   Output will be a List contains `0` (not popular) or `1` (popular)
+
+## Testing API
+We provide 2 methods to test the web APIs
+- Postman
+  - Scripts available at `postman_test/spark.postman_collection.json`. Import it to Postman to start testing.
+- Rest Client
+  - Scripts available at `restclient_test/request.rest`. Open it in `VsCode`(with rest client extension) to start testing.
+
+#### Note
+- When you start application first time, you must call the **`/spark/train`** API before you request other APIs
+
 
 ## Configuration
 

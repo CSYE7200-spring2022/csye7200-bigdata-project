@@ -3,7 +3,7 @@ package spark
 import com.typesafe.config.ConfigFactory
 import org.apache.spark.ml.classification.{LogisticRegression, RandomForestClassifier}
 import org.apache.spark.ml.evaluation.BinaryClassificationEvaluator
-import org.apache.spark.ml.feature.{StandardScaler, VectorAssembler, Tokenizer, HashingTF, IDF}
+import org.apache.spark.ml.feature.{StandardScaler, VectorAssembler}
 import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.sql.functions.{expr, when}
 import org.apache.spark.sql.types._

@@ -88,6 +88,6 @@ Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0g
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
 Content-Disposition: form-data; name="csv"; filename="sample_songs.csv"
 
-< ./sample_batch.csv
+< ./sample_batch_500.csv
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 

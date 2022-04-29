@@ -6,14 +6,13 @@ import org.apache.spark.sql.functions.{count, when}
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.tagobjects.Slow
-import play.api.libs.json.{JsValue, Json}
 import spark.FitModel.assembleScalePipeline
 
 import scala.util.Success
 
 class FitModelTest extends AnyFlatSpec with Matchers{
 
-  val SAMPLE_SONGS_FILEPATH = "/sample_songs.csv"
+  val SAMPLE_SONGS_FILEPATH = "/sample_csv.csv"
 
   val spark: SparkSession = SparkSession
     .builder()
@@ -26,7 +25,7 @@ class FitModelTest extends AnyFlatSpec with Matchers{
 
   it should "successfully preprocess dataframe" taggedAs Slow in {
 
-    val filepath = getClass.getResource("/sample_songs.csv").getPath
+    val filepath = getClass.getResource(SAMPLE_SONGS_FILEPATH).getPath
 
     val try_processed_df = for(df <- DataUtils.loadCsv(filepath, spark);
                                pdf <- FitModel.columnProcessing(df)) yield pdf
