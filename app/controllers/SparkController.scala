@@ -1,6 +1,6 @@
 package controllers
 
-import org.apache.spark.ml.Transformer
+import org.apache.spark.ml.{PipelineModel, Transformer}
 import play.api._
 import play.api.libs.Files
 import play.api.libs.json._
@@ -10,7 +10,7 @@ import spark.{DataUtils, FitModel, SparkContainer}
 import javax.inject._
 import scala.concurrent.ExecutionContext.Implicits._
 import scala.concurrent.Future
-import scala.util.{Failure, Success}
+import scala.util.{Failure, Success, Try}
 
 class SparkController @Inject()(
   val controllerComponents: ControllerComponents,
@@ -40,71 +40,73 @@ class SparkController @Inject()(
     Ok(views.html.index("Model training initiated!"))
   }
 
-
   def inferenceLR: Action[JsValue] = Action(parse.json) { implicit request: Request[JsValue] => {
     val jsVal = request.body
-    inference(sparkContainer.lrModelOpt, jsVal)
+    inference(sparkContainer.lrModelOpt, jsVal) match {
+      case Success(result) => result
+      case Failure(e) => BadRequest(s"Error processing request: ${e.getMessage}")
+    }
   }}
-
 
   def inferenceRF: Action[JsValue] = Action(parse.json) { implicit request: Request[JsValue] => {
     val jsVal = request.body
-    inference(sparkContainer.rfModelOpt, jsVal)
+    inference(sparkContainer.rfModelOpt, jsVal)  match {
+      case Success(result) => result
+      case Failure(e) => BadRequest(s"Error processing request: ${e.getMessage}")
+    }
   }}
 
-  def inferenceBatchLR: Action[MultipartFormData[Files.TemporaryFile]] = Action(parse.multipartFormData) { implicit request => {
-    request.body.file("csv").map { csv =>
-      import java.io.File
-      val temp_f = new File("/tmp/batch.csv")
-      temp_f.delete()
-      csv.ref.moveTo(temp_f)
-      inferenceBatch(sparkContainer.lrModelOpt, "/tmp/batch.csv")
+  def inferenceBatchLR: Action[MultipartFormData[Files.TemporaryFile]] =
+    Action(parse.multipartFormData) { implicit request => {
+      request.body.file("csv").map {
+        csv => inferenceCsv(csv, sparkContainer.lrModelOpt)
+      }.getOrElse {
+        BadRequest("Missing file!")
+      }
+    }}
+
+  def inferenceBatchRF: Action[MultipartFormData[Files.TemporaryFile]] =
+    Action(parse.multipartFormData) { implicit request => {
+    request.body.file("csv").map {
+      csv => inferenceCsv(csv, sparkContainer.rfModelOpt)
     }.getOrElse {
       BadRequest("Missing file!")
     }
   }}
 
-  def inferenceBatchRF: Action[MultipartFormData[Files.TemporaryFile]] = Action(parse.multipartFormData) { implicit request => {
-    request.body.file("csv").map { csv =>
-      import java.io.File
-      val temp_f = new File("/tmp/batch.csv")
-      temp_f.delete()
-      csv.ref.moveTo(temp_f)
-      inferenceBatch(sparkContainer.rfModelOpt, "/tmp/batch.csv")
-    }.getOrElse {
-      BadRequest("Missing file!")
-    }
-  }}
-
-
-  def inference(model: Option[Transformer], jsVal: JsValue): Result = model match {
+  def inference(model: Option[Transformer], jsVal: JsValue): Try[Result] = model match {
     case Some(model) =>
-      val processedDf = FitModel.columnProcessing(
-        DataUtils.dfFromJson(jsVal, sparkContainer.getSession),
-        isTrainData = false
-      )
-
-      processedDf match {
+      for(raw_df <- DataUtils.dfFromJson(jsVal, sparkContainer.getSession))
+      yield FitModel.columnProcessing(raw_df, isTrainData = false)
+      match {
         case Success(df) =>
           val prediction = model.transform(df).select("prediction").head().getDouble(0)
           Ok(s"result: $prediction (${if (prediction == 0) "not popular" else "popular"})")
 
         case Failure(e) => BadRequest(s"Error processing dataframe: ${e.getMessage}")
       }
-    case None => BadRequest("Model not initialized, please train the model first")
+    case None => Try(BadRequest("Model not initialized, please train the model first"))
   }
 
-  def inferenceBatch(model: Option[Transformer], filepath: String): Result = model match {
+  def inferenceCsv(csv: MultipartFormData.FilePart[Files.TemporaryFile], modelOpt: Option[PipelineModel]): Result ={
+    import java.io.File
+    val temp_f = new File("batch.csv")
+    if(temp_f.exists())  temp_f.delete()
+
+    csv.ref.moveTo(temp_f)
+    inferenceBatch(modelOpt, "batch.csv") match {
+      case Success(result) => result
+      case Failure(e) => BadRequest(s"Error processing request: ${e.getMessage}")
+    }
+  }
+
+  def inferenceBatch(model: Option[Transformer], filepath: String): Try[Result] = model match {
     case Some(model) =>
-      val processedDf = FitModel.columnProcessing(
-        DataUtils.loadCsv(filepath, sparkContainer.getSession).get,
-        isTrainData = false
-      )
-
-      logger.info(s"Batch size = ${processedDf.get.count().toInt}")
-
-      processedDf match {
+      for(raw_df <- DataUtils.loadCsv(filepath, sparkContainer.getSession))
+        yield FitModel.columnProcessing(raw_df, isTrainData = false)
+      match {
         case Success(df) =>
+          logger.info(s"Raw Batch size = ${df.count().toInt}")
           val predictionDF = model.transform(df).select("prediction")
           val record_num = predictionDF.count().toInt
           val prediction = predictionDF.head(record_num)
@@ -114,8 +116,7 @@ class SparkController @Inject()(
           Ok(s"Batch size: $record_num\nresult: ${prediction.mkString("[\n", "\n ", "\n]")}")
         case Failure(e) => BadRequest(s"Error processing dataframe: ${e.getMessage}")
       }
-    case None => BadRequest("Model not initialized, please train the model first")
+    case None => Try(BadRequest("Model not initialized, please train the model first"))
   }
-
 
 }
