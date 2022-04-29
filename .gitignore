@@ -1,4 +1,6 @@
 *.csv
+*.pptx
+*.key
 *.class
 *.log
 *millionsongsubset*
