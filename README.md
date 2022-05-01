@@ -29,6 +29,10 @@
     -   Random forest Batch inference API. Input should be **.csv**file.
     -   Output will be a List contains `0` (not popular) or `1` (popular)
 
+## GUI
+To use the GUI, please follow the instruction [here](./mpp-app/README.md)
+![webapp-snapshot](./mpp-app/webapp-snapshot.png)
+
 ## Testing API
 We provide 2 methods to test the web APIs
 - Postman
